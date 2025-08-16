@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 namespace nginx_manager.Models
 {
     // Simple example entity
-    public class Host
+    public class NginxHost
     {
         public int Id { get; set; }
         public string Hostname { get; set; } = string.Empty;
@@ -17,14 +17,14 @@ namespace nginx_manager.Models
         {
         }
 
-        public DbSet<Host> Hosts => Set<Host>();
+        public DbSet<NginxHost> NginxHosts => Set<NginxHost>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            modelBuilder.Entity<Host>(entity =>
+            modelBuilder.Entity<NginxHost>(entity =>
             {
-                entity.ToTable("hosts");
+                entity.ToTable("nginx_hosts");
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Hostname).HasMaxLength(255).IsRequired();
                 entity.Property(e => e.Ip).HasMaxLength(64).IsRequired();
