@@ -1,5 +1,6 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using nginx_manager.Models;
 
 namespace nginx_manager.controllers
 {
@@ -7,13 +8,45 @@ namespace nginx_manager.controllers
     [ApiController]
     public class HostController : ControllerBase
     {
-        private readonly IHostEnvironment _environment;
-        public HostController(IHostEnvironment environment)
-        { }
-        [HttpGet]
-        public ActionResult<string> Get()
+        private readonly AppDbContext _db;
+        public HostController(AppDbContext db)
         {
-            return "Hello World!";
-        }       
+            _db = db;
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Models.Host>>> Get()
+        {
+            var items = await _db.Hosts.OrderByDescending(h => h.Id).Take(100).ToListAsync();
+            return Ok(items);
+        }
+
+        public class PingRequest
+        {
+            public string hostname { get; set; } = string.Empty;
+            public string ip { get; set; } = string.Empty;
+        }
+
+        [HttpPost]
+        [Route("ping")]
+        public async Task<IActionResult> AgentPing([FromBody] PingRequest value)
+        {
+            if (string.IsNullOrWhiteSpace(value.hostname) || string.IsNullOrWhiteSpace(value.ip))
+            {
+                return BadRequest("hostname and ip are required");
+            }
+
+            var entity = new Models.Host
+            {
+                Hostname = value.hostname,
+                Ip = value.ip,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _db.Hosts.Add(entity);
+            await _db.SaveChangesAsync();
+
+            return NoContent();
+        }
     }
 }
